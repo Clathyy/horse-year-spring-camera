@@ -3,765 +3,225 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1" />
-  <title>京西福地 · 五福临门 — 拍照贺年（增强版，无上传）</title>
+  <title>京西福地 · 五福临门 — 拍照</title>
   <style>
-    :root{ --red:#c91018; --gold:#f6c24a; --bg:#111; --glass: rgba(255,255,255,0.9); }
-    html,body{ height:100%; margin:0; font-family: "Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif; background:#fff7f0;}
-    .app{ display:flex; flex-direction:column; height:100vh; }
-    header{ padding:10px; background:linear-gradient(90deg,var(--red),#ff5a5a); color:#fff; text-align:center; }
-    header h1{ margin:0; font-size:16px; }
-    main{ display:flex; gap:12px; padding:10px; flex:1; box-sizing:border-box; }
-    .left{ flex:1; display:flex; flex-direction:column; gap:8px; align-items:center; }
-    .preview-wrap{ width:100%; max-width:420px; aspect-ratio:3/4; background:#000; position:relative; border-radius:10px; overflow:hidden; }
-    video{ width:100%; height:100%; object-fit:cover; display:block; }
-    canvas#previewCanvas{ position:absolute; inset:0; width:100%; height:100%; }
-    .controls{ position:absolute; right:8px; top:8px; display:flex; flex-direction:column; gap:8px; z-index:30; }
-    .btn{ background:var(--red); color:#fff; border:none; padding:8px 10px; border-radius:8px; font-weight:700; }
-    .btn.secondary{ background:var(--glass); color:var(--red); font-weight:700; border:1px solid rgba(0,0,0,0.06); }
-    .panel{ width:360px; max-width:40vw; min-width:260px; display:flex; flex-direction:column; gap:8px; }
-    .section{ background:#fff; padding:8px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.06); }
-    .sticker-list{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
-    .sticker-thumb{ width:64px; height:64px; border-radius:8px; overflow:hidden; border:2px solid transparent; background:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer; }
-    .sticker-thumb img{ width:100%; height:100%; object-fit:contain; }
-    .active{ border-color:var(--red); box-shadow:0 4px 12px rgba(201,26,26,0.18); }
-    .inputs{ display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
-    label{ font-size:13px; color:#333; }
-    input[type="range"]{ width:160px; }
-    .footer{ text-align:center; font-size:12px; color:#666; padding:8px; }
-    .small{ font-size:12px; color:#444; }
+    body{ margin:0; font-family: -apple-system, BlinkMacSystemFont, "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif; background:#fff7f0; color:#222; }
+    .container{ max-width:540px; margin:0 auto; padding:12px; }
+    header{ text-align:center; padding:12px 0; background:linear-gradient(90deg,#c91018,#ff6b6b); color:#fff; border-radius:8px; }
+    header h1{ margin:0; font-size:18px; }
+    .preview{ margin-top:12px; position:relative; border-radius:12px; overflow:hidden; background:#000; }
+    video{ width:100%; height:auto; display:block; object-fit:cover; }
+    canvas{ display:none; }
+    .overlay{ position:absolute; left:0; right:0; top:0; bottom:0; pointer-events:none; display:flex; flex-direction:column; justify-content:space-between; }
+    .top{ padding:10px; display:flex; justify-content:center; align-items:center; }
+    .title{ background:rgba(255,255,255,0.06); padding:6px 12px; border-radius:18px; color:#ffd66b; font-weight:800; }
+    .centerText{ text-align:center; color:#c91018; font-weight:900; text-shadow:0 6px 10px rgba(0,0,0,0.3); }
+    .controls{ display:flex; gap:8px; justify-content:center; margin-top:12px; }
+    button{ padding:10px 14px; border-radius:10px; border:none; font-weight:700; }
+    .primary{ background:#c91018; color:#fff; }
+    .secondary{ background:#fff; color:#c91018; border:1px solid #f0dcdc; }
+    .hint{ margin-top:10px; font-size:13px; color:#666; text-align:center; }
+    .fallback{ margin-top:10px; padding:8px; background:#fff4f4; border-radius:8px; color:#7a1a1a; }
   </style>
 </head>
 <body>
-  <div class="app">
-    <header><h1>京西福地 · 五福临门 — 拍照贺年（增强版，无上传）</h1></header>
-    <main>
-      <div class="left">
-        <div class="preview-wrap" id="previewWrap">
-          <video id="video" autoplay playsinline muted></video>
-          <canvas id="previewCanvas"></canvas>
+  <div class="container">
+    <header>
+      <h1>京西福地 · 五福临门</h1>
+    </header>
 
-          <div class="controls" id="controls">
-            <button id="shutter" class="btn" title="拍照">拍 照</button>
-            <button id="save" class="btn secondary" title="保存图片">保存</button>
-            <button id="undo" class="btn secondary" title="撤销">撤销</button>
-            <button id="clear" class="btn secondary" title="清空叠加">清空</button>
-          </div>
+    <div class="preview" id="previewWrap">
+      <video id="video" autoplay playsinline muted></video>
+      <canvas id="canvas"></canvas>
+
+      <div class="overlay" aria-hidden="true">
+        <div class="top"><div class="title">京西福地 五福临门</div></div>
+        <div style="padding:12px; text-align:center;">
+          <div class="centerText" style="font-size:28px;">马年大吉</div>
         </div>
-
-        <div class="small">提示：单指拖动选中元素以移动；双指缩放/旋转；可添加文字或贴纸，调整滤镜后点击“拍照/保存”。</div>
       </div>
+    </div>
 
-      <div class="panel">
-        <div class="section">
-          <div style="display:flex;justify-content:space-between;align-items:center;">
-            <div><strong>贴纸库</strong></div>
-            <div><input id="uploadSticker" type="file" accept="image/*" /></div>
-          </div>
-          <div class="sticker-list" id="stickerList" style="margin-top:8px;">
-            <!-- 预置贴纸缩略 -->
-          </div>
-        </div>
+    <div class="controls" role="group" aria-label="controls">
+      <button id="flip" class="secondary">切换前后</button>
+      <button id="shutter" class="primary">拍 照</button>
+      <button id="save" class="secondary">保存</button>
+    </div>
 
-        <div class="section">
-          <div><strong>文字（添加 / 编辑）</strong></div>
-          <div style="margin-top:6px;" class="inputs">
-            <input id="addTextInput" type="text" placeholder="输入祝福文字，示例：京西福地 五福临门" style="flex:1;padding:6px;border-radius:6px;border:1px solid #ddd"/>
-            <button id="addTextBtn" class="btn secondary">添加</button>
-          </div>
-          <div style="display:flex;gap:6px;margin-top:8px;align-items:center;">
-            <label>大小<input id="fontSize" type="range" min="18" max="160" value="48"/></label>
-            <input id="fontColor" type="color" value="#ffd66b" />
-            <button id="boldToggle" class="btn secondary">加粗</button>
-          </div>
-          <div style="margin-top:6px;">
-            <label>阴影 <input id="textShadow" type="checkbox" checked /></label>
-          </div>
-        </div>
+    <div class="hint">请在手机浏览器中打开并允许摄像头权限。若在微信内置浏览器无法打开摄像头，请使用系统浏览器（Safari/Chrome）打开。</div>
 
-        <div class="section">
-          <div><strong>滤镜</strong></div>
-          <div style="display:flex;flex-direction:column; gap:6px; margin-top:8px;">
-            <label>亮度 <input id="brightness" type="range" min="0.5" max="2" step="0.01" value="1"/></label>
-            <label>对比度 <input id="contrast" type="range" min="0.5" max="2" step="0.01" value="1"/></label>
-            <label>饱和度 <input id="saturate" type="range" min="0" max="2" step="0.01" value="1.1"/></label>
-            <label>模糊 <input id="blur" type="range" min="0" max="6" step="0.1" value="0"/></label>
-            <label>美颜（简单：柔化） <input id="beauty" type="range" min="0" max="1" step="0.01" value="0"/></label>
-          </div>
-        </div>
-
-        <div class="section">
-          <div><strong>元素管理</strong></div>
-          <div style="margin-top:8px;">
-            <div id="itemList" class="small">当前无元素</div>
-            <div style="margin-top:8px; display:flex; gap:8px;">
-              <button id="selectTop" class="btn secondary">置顶</button>
-              <button id="deleteItem" class="btn secondary">删除选中</button>
-            </div>
-          </div>
-        </div>
-
-      </div>
-    </main>
-
-    <div class="footer">如需更多素材或功能（例如更多贴纸或更复杂的文字排版），告诉我我来继续完善。</div>
+    <div id="fallback" class="fallback" style="display:none;">
+      当前浏览器无法直接访问相机。你可以使用下面的文件输入拍照或选择已有图片：
+      <div style="margin-top:8px;"><input id="fileInput" type="file" accept="image/*;capture=camera" capture="environment"></div>
+    </div>
   </div>
 
   <script>
-    // 基本元素与状态
-    const video = document.getElementById('video');
-    const previewCanvas = document.getElementById('previewCanvas');
-    const ctx = previewCanvas.getContext('2d', { willReadFrequently: true });
-    const stickerListEl = document.getElementById('stickerList');
-    const itemListEl = document.getElementById('itemList');
+    (function(){
+      const video = document.getElementById('video');
+      const canvas = document.getElementById('canvas');
+      const shutter = document.getElementById('shutter');
+      const saveBtn = document.getElementById('save');
+      const flipBtn = document.getElementById('flip');
+      const fallback = document.getElementById('fallback');
+      const fileInput = document.getElementById('fileInput');
 
-    let stream = null;
-    let elements = []; // array of {id,type:'sticker'|'text', img, x,y,scale,rotation, w,h, textProps}
-    let selectedId = null;
-    let historyStack = [];
+      let stream = null;
+      let usingFront = false; // false = back, true = front
 
-    // filters
-    const filters = {
-      brightness: document.getElementById('brightness'),
-      contrast: document.getElementById('contrast'),
-      saturate: document.getElementById('saturate'),
-      blur: document.getElementById('blur'),
-      beauty: document.getElementById('beauty'),
-    };
-
-    // text controls
-    const addTextInput = document.getElementById('addTextInput');
-    const addTextBtn = document.getElementById('addTextBtn');
-    const fontSize = document.getElementById('fontSize');
-    const fontColor = document.getElementById('fontColor');
-    const boldToggle = document.getElementById('boldToggle');
-    const textShadow = document.getElementById('textShadow');
-
-    // actions
-    const shutter = document.getElementById('shutter');
-    const saveBtn = document.getElementById('save');
-    const undoBtn = document.getElementById('undo');
-    const clearBtn = document.getElementById('clear');
-    const uploadSticker = document.getElementById('uploadSticker');
-    const selectTopBtn = document.getElementById('selectTop');
-    const deleteItemBtn = document.getElementById('deleteItem');
-
-    // helpers
-    function pushHistory(){
-      historyStack.push(JSON.stringify(elements));
-      if(historyStack.length>30) historyStack.shift();
-    }
-    function undo(){
-      if(historyStack.length>0){
-        const last = historyStack.pop();
-        elements = JSON.parse(last);
-        selectedId = null;
-        drawPreview();
-        updateItemList();
-      }
-    }
-
-    // 初始化摄像头
-    async function startCamera(){
-      try{
-        stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode: 'environment' }, audio:false });
+      async function startCamera(){
+        if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+          fallback.style.display = 'block';
+          return;
+        }
+        const constraints = { video: { facingMode: usingFront ? 'user' : 'environment' }, audio:false };
+        try{
+          stream = await navigator.mediaDevices.getUserMedia(constraints);
+        }catch(e){
+          // try looser constraint
+          try{
+            stream = await navigator.mediaDevices.getUserMedia({ video: true, audio:false });
+          }catch(err){
+            console.warn('getUserMedia failed', err);
+            fallback.style.display = 'block';
+            return;
+          }
+        }
         video.srcObject = stream;
-        await video.play();
-        resizeCanvas();
-        requestAnimationFrame(drawPreview);
-      }catch(e){
-        console.error('无法打开摄像头', e);
-        alert('无法访问摄像头，请检查权限或使用支持摄像头的浏览器。');
+        video.play().catch(()=>{});
+        // ensure canvas size matches video when metadata loaded
+        video.addEventListener('loadedmetadata', ()=>{
+          resizeCanvas();
+        });
       }
-    }
 
-    function stopCamera(){
-      if(stream){
-        stream.getTracks().forEach(t=>t.stop());
-        stream = null;
+      function stopCamera(){
+        if(stream){
+          stream.getTracks().forEach(t=>t.stop());
+          stream = null;
+        }
       }
-    }
 
-    function resizeCanvas(){
-      const rect = previewCanvas.getBoundingClientRect();
-      previewCanvas.width = rect.width * devicePixelRatio;
-      previewCanvas.height = rect.height * devicePixelRatio;
-      ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
-    }
-
-    // 预置贴纸（SVG dataURLs）
-    const presetStickers = [
-      {
-        name:'小灯笼',
-        data: `data:image/svg+xml;utf8,${encodeURIComponent(
-          `<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'>
-            <defs><linearGradient id='g' x1='0' x2='1'><stop offset='0' stop-color='#ffb14d'/><stop offset='1' stop-color='#ff5a5a'/></linearGradient></defs>
-            <rect x='0' y='0' width='200' height='200' rx='20' fill='transparent'/>
-            <g transform='translate(30,20)'>
-              <ellipse cx='70' cy='60' rx='50' ry='60' fill='url(#g)' stroke='#9e1d1d' stroke-width='4'/>
-              <rect x='60' y='10' width='20' height='18' rx='4' fill='#9e1d1d'/>
-              <line x1='70' y1='120' x2='70' y2='150' stroke='#9e1d1d' stroke-width='4'/>
-              <circle cx='70' cy='140' r='6' fill='#ffd94f'/>
-            </g>
-          </svg>`
-        )}`
-      },
-      {
-        name:'金元宝',
-        data: `data:image/svg+xml;utf8,${encodeURIComponent(
-          `<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'>
-            <defs><linearGradient id='gg' x1='0' x2='1'><stop offset='0' stop-color='#ffd66b'/><stop offset='1' stop-color='#f1b22a'/></linearGradient></defs>
-            <g transform='translate(20,30)'>
-              <path d='M40 40 C20 20, 120 10, 140 40 C160 80, 60 120, 40 40 Z' fill='url(#gg)' stroke='#a46a10' stroke-width='3'/>
-              <text x='90' y='65' text-anchor='middle' font-size='18' fill='#a14600' font-weight='700'>福</text>
-            </g>
-          </svg>`
-        )}`
-      },
-      {
-        name:'马年喜',
-        data: `data:image/svg+xml;utf8,${encodeURIComponent(
-          `<svg xmlns='http://www.w3.org/2000/svg' width='240' height='120' viewBox='0 0 240 120'>
-            <rect width='240' height='120' rx='12' fill='#c91018'/>
-            <g transform='translate(12,10)'>
-              <path d='M20 70 C40 30, 120 20, 160 40 C180 52, 170 80, 140 90 C110 100, 50 96, 20 70 Z' fill='#ffd66b' stroke='#7a120f' stroke-width='3'/>
-              <text x='120' y='60' fill='#7a120f' font-size='28' font-weight='900'>马年</text>
-            </g>
-          </svg>`
-        )}`
+      function resizeCanvas(){
+        const vw = video.videoWidth || video.clientWidth;
+        const vh = video.videoHeight || video.clientHeight;
+        canvas.width = vw;
+        canvas.height = vh;
+        // scale canvas CSS to match container
+        canvas.style.width = video.clientWidth + 'px';
+        canvas.style.height = video.clientHeight + 'px';
       }
-    ];
 
-    // render sticker library
-    function renderStickerLibrary(){
-      stickerListEl.innerHTML = '';
-      presetStickers.forEach((s, idx)=>{
-        const btn = document.createElement('div');
-        btn.className = 'sticker-thumb';
-        btn.title = s.name;
-        const img = new Image();
-        img.src = s.data;
-        img.alt = s.name;
-        btn.appendChild(img);
-        btn.addEventListener('click', ()=> addStickerFromDataUrl(s.data));
-        stickerListEl.appendChild(btn);
-      });
-    }
+      async function takePhoto(){
+        if(!stream){
+          alert('相机未就绪或权限被禁止');
+          return null;
+        }
+        const vw = video.videoWidth;
+        const vh = video.videoHeight;
+        if(!vw || !vh){
+          alert('视频未就绪，请稍候');
+          return null;
+        }
+        canvas.width = vw; canvas.height = vh;
+        const ctx = canvas.getContext('2d');
+        // draw current frame
+        ctx.drawImage(video, 0, 0, vw, vh);
 
-    // add sticker element
-    function addStickerFromDataUrl(dataUrl){
-      const img = new Image();
-      img.onload = ()=>{
-        pushHistory();
-        const id = 'el_' + Date.now();
-        const aspect = img.width / img.height;
-        const wrapRect = previewCanvas.getBoundingClientRect();
-        const baseW = wrapRect.width * 0.4;
-        const baseH = baseW / aspect;
-        const el = {
-          id, type:'sticker', img, x: wrapRect.width/2 - baseW/2, y: wrapRect.height/2 - baseH/2,
-          scale:1, rotation:0, w: baseW, h: baseH, name: '贴纸'
-        };
-        elements.push(el);
-        selectedId = id;
-        drawPreview();
-        updateItemList();
-      };
-      img.src = dataUrl;
-    }
-
-    // add text element
-    function addText(){
-      const text = addTextInput.value.trim() || '京西福地 五福临门';
-      pushHistory();
-      const id = 'el_' + Date.now();
-      const size = parseInt(fontSize.value,10);
-      const wrapRect = previewCanvas.getBoundingClientRect();
-      const el = {
-        id, type:'text', text, x: wrapRect.width/2, y: wrapRect.height*0.68,
-        scale:1, rotation:0, w:0, h:0,
-        fontSize: size, color: fontColor.value, bold: boldToggle.classList.contains('on'),
-        shadow: textShadow.checked
-      };
-      elements.push(el);
-      selectedId = id;
-      drawPreview();
-      updateItemList();
-    }
-
-    // drawing pipeline: draw video frame as background + filters + elements
-    function drawPreview(){
-      resizeCanvas();
-      const vw = previewCanvas.width / devicePixelRatio;
-      const vh = previewCanvas.height / devicePixelRatio;
-      ctx.clearRect(0,0,vw,vh);
-      // draw video into canvas to use filters
-      try{
+        // overlay text decorations
         ctx.save();
-        // apply CSS-like filters
-        const fl = `brightness(${filters.brightness.value}) contrast(${filters.contrast.value}) saturate(${filters.saturate.value}) blur(${filters.blur.value}px)`;
-        ctx.filter = fl;
-        // beauty: simple overlay blur/alpha effect (approximated by globalAlpha + blur)
-        if(parseFloat(filters.beauty.value) > 0){
-          // draw to temp offscreen then draw blurred with alpha for a softening effect
-          const tmp = document.createElement('canvas');
-          tmp.width = previewCanvas.width;
-          tmp.height = previewCanvas.height;
-          const tctx = tmp.getContext('2d');
-          tctx.drawImage(video, 0, 0, tmp.width, tmp.height);
-          // draw original
-          ctx.drawImage(video, 0, 0, vw, vh);
-          // apply blur overlay
-          ctx.filter = `blur(${Math.max(0, parseFloat(filters.beauty.value) * 8)}px)`;
-          ctx.globalAlpha = 0.25;
-          ctx.drawImage(tmp, 0, 0, vw, vh);
-          ctx.globalAlpha = 1;
-          ctx.filter = 'none';
-        } else {
-          ctx.drawImage(video, 0, 0, vw, vh);
-          ctx.filter = 'none';
-        }
+        const pad = Math.round(Math.min(vw,vh) * 0.02);
+        // bottom text
+        ctx.font = Math.floor(vw/14) + 'px "Noto Sans SC"';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        ctx.lineWidth = Math.max(6, Math.round(vw*0.006));
+        ctx.strokeStyle = 'rgba(80,40,10,0.9)';
+        ctx.strokeText('京西福地  五福临门', vw/2, vh - pad - 20);
+        ctx.fillStyle = '#ffd66b';
+        ctx.fillText('京西福地  五福临门', vw/2, vh - pad - 20);
+        // big text
+        const big = '马年大吉';
+        ctx.font = Math.floor(vw/9) + 'px "Noto Sans SC"';
+        ctx.textBaseline = 'middle';
+        ctx.strokeStyle = 'rgba(0,0,0,0.35)';
+        ctx.lineWidth = Math.max(8, Math.round(vw*0.01));
+        ctx.strokeText(big, vw/2, vh*0.68);
+        ctx.fillStyle = '#c91018';
+        ctx.fillText(big, vw/2, vh*0.68);
         ctx.restore();
-      }catch(e){
-        // video draw may fail if not ready
-        ctx.fillStyle='#000';
-        ctx.fillRect(0,0,vw,vh);
+
+        return canvas.toDataURL('image/jpeg', 0.95);
       }
 
-      // draw default decorations (top/bottom banners)
-      drawDefaultDecor(ctx, vw, vh);
-
-      // draw elements in order
-      for(const el of elements){
-        if(el.type === 'sticker' && el.img){
-          ctx.save();
-          ctx.translate(el.x + el.w/2, el.y + el.h/2);
-          ctx.rotate(el.rotation);
-          ctx.scale(el.scale, el.scale);
-          ctx.drawImage(el.img, -el.w/2, -el.h/2, el.w, el.h);
-          // selection outline
-          if(el.id === selectedId){
-            ctx.lineWidth = 2;
-            ctx.strokeStyle = 'rgba(255,255,255,0.9)';
-            ctx.strokeRect(-el.w/2, -el.h/2, el.w, el.h);
+      shutter.addEventListener('click', async ()=>{
+        shutter.disabled = true;
+        const dataUrl = await takePhoto();
+        if(dataUrl){
+          // show quick preview by opening in new tab or downloading
+          // we'll open in new tab for preview; user can save from there
+          const w = window.open();
+          if(w){
+            w.document.write('<title>预览</title>');
+            w.document.write('<img src="' + dataUrl + '" style="max-width:100%">');
+          }else{
+            // fallback: download
+            const a = document.createElement('a');
+            a.href = dataUrl; a.download = 'jingxi-fudi-' + Date.now() + '.jpg';
+            document.body.appendChild(a); a.click(); a.remove();
           }
-          ctx.restore();
-        } else if(el.type === 'text'){
-          ctx.save();
-          ctx.translate(el.x, el.y);
-          ctx.rotate(el.rotation);
-          ctx.scale(el.scale, el.scale);
-          const fontWeight = el.bold ? '700' : '500';
-          ctx.font = `${fontWeight} ${el.fontSize}px "Noto Sans SC","Microsoft YaHei",sans-serif`;
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          if(el.shadow){
-            ctx.shadowColor = 'rgba(0,0,0,0.35)';
-            ctx.shadowBlur = 10;
-            ctx.shadowOffsetY = 4;
-          } else {
-            ctx.shadowColor = 'transparent';
-            ctx.shadowBlur = 0;
-          }
-          ctx.fillStyle = el.color;
-          ctx.fillText(el.text, 0, 0);
-          if(el.id === selectedId){
-            // bounding box approx
-            const metrics = ctx.measureText(el.text);
-            const h = el.fontSize;
-            ctx.strokeStyle = 'rgba(255,255,255,0.9)';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(-metrics.width/2 - 8, -h/2 - 8, metrics.width + 16, h + 16);
-          }
-          ctx.restore();
         }
-      }
-    }
-
-    function drawDefaultDecor(ctx, vw, vh){
-      // Top banners and center text (integrated into preview but not into elements)
-      ctx.save();
-      ctx.fillStyle = 'rgba(201,26,26,0.85)';
-      ctx.fillRect(vw*0.05, vh*0.03, vw*0.9, vh*0.085);
-      ctx.fillStyle = '#fff';
-      ctx.font = `600 ${Math.floor(vw*0.04)}px "Noto Sans SC"`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('京西福地 · 五福临门', vw/2, vh*0.075);
-      ctx.restore();
-
-      // big greeting
-      ctx.save();
-      ctx.font = `900 ${Math.floor(vw*0.09)}px "Noto Sans SC"`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillStyle = '#c91018';
-      ctx.shadowColor = 'rgba(0,0,0,0.35)';
-      ctx.shadowBlur = 12;
-      ctx.fillText('马年大吉', vw/2, vh*0.6);
-      ctx.restore();
-    }
-
-    // selection & hit testing
-    function hitTest(x,y){
-      // check top-down
-      for(let i=elements.length-1;i>=0;i--){
-        const el = elements[i];
-        if(el.type === 'sticker'){
-          // transform point into element space
-          const cx = el.x + el.w/2, cy = el.y + el.h/2;
-          const dx = x - cx, dy = y - cy;
-          const cos = Math.cos(-el.rotation), sin = Math.sin(-el.rotation);
-          const rx = (dx * cos - dy * sin) / el.scale;
-          const ry = (dx * sin + dy * cos) / el.scale;
-          if(rx >= -el.w/2 && rx <= el.w/2 && ry >= -el.h/2 && ry <= el.h/2){
-            return el;
-          }
-        } else if(el.type === 'text'){
-          // approximate by text metrics
-          ctx.save();
-          const weight = el.bold ? '700' : '500';
-          ctx.font = `${weight} ${el.fontSize}px "Noto Sans SC"`;
-          const m = ctx.measureText(el.text);
-          const w = m.width + 16;
-          const h = el.fontSize + 16;
-          ctx.restore();
-          const cx = el.x, cy = el.y;
-          const dx = x - cx, dy = y - cy;
-          const cos = Math.cos(-el.rotation), sin = Math.sin(-el.rotation);
-          const rx = (dx * cos - dy * sin) / el.scale;
-          const ry = (dx * sin + dy * cos) / el.scale;
-          if(rx >= -w/2 && rx <= w/2 && ry >= -h/2 && ry <= h/2) return el;
-        }
-      }
-      return null;
-    }
-
-    // touch / pointer handlers for drag and pinch-to-scale/rotate
-    const previewWrap = document.getElementById('previewWrap');
-    let pointers = new Map();
-    let pointerState = { dragging:false, startX:0, startY:0, elStart:null, initialDistance:0, initialAngle:0 };
-
-    previewWrap.addEventListener('pointerdown', (ev)=>{
-      previewWrap.setPointerCapture(ev.pointerId);
-      pointers.set(ev.pointerId, {x:ev.clientX, y:ev.clientY});
-      if(pointers.size === 1){
-        // single touch: select or start drag
-        const rect = previewCanvas.getBoundingClientRect();
-        const x = (ev.clientX - rect.left);
-        const y = (ev.clientY - rect.top);
-        const hit = hitTest(x,y);
-        if(hit){
-          selectedId = hit.id;
-          pushHistory();
-          pointerState.dragging = true;
-          pointerState.elStart = { x: hit.x, y: hit.y, scale: hit.scale, rotation: hit.rotation };
-          pointerState.startX = ev.clientX;
-          pointerState.startY = ev.clientY;
-          updateItemList();
-        } else {
-          // tap empty -> deselect
-          selectedId = null;
-          updateItemList();
-        }
-      } else if(pointers.size === 2){
-        // pinch start
-        const keys = Array.from(pointers.keys());
-        const a = pointers.get(keys[0]), b = pointers.get(keys[1]);
-        pointerState.initialDistance = distance(a,b);
-        pointerState.initialAngle = angle(a,b);
-        // record initial transforms for selected element
-        const el = elements.find(e=>e.id===selectedId);
-        if(el){
-          pointerState.elStart = { scale: el.scale, rotation: el.rotation };
-        }
-      }
-    });
-
-    previewWrap.addEventListener('pointermove', (ev)=>{
-      if(!pointers.has(ev.pointerId)) return;
-      pointers.set(ev.pointerId, {x:ev.clientX, y:ev.clientY});
-      if(pointers.size === 1 && pointerState.dragging && selectedId){
-        const dx = ev.clientX - pointerState.startX;
-        const dy = ev.clientY - pointerState.startY;
-        const el = elements.find(e=>e.id===selectedId);
-        if(el && pointerState.elStart){
-          el.x = pointerState.elStart.x + dx;
-          el.y = pointerState.elStart.y + dy;
-          drawPreview();
-        }
-      } else if(pointers.size === 2 && selectedId){
-        const keys = Array.from(pointers.keys());
-        const a = pointers.get(keys[0]), b = pointers.get(keys[1]);
-        const newDist = distance(a,b);
-        const newAngle = angle(a,b);
-        const el = elements.find(e=>e.id===selectedId);
-        if(el && pointerState.elStart){
-          const scaleRatio = newDist / pointerState.initialDistance;
-          el.scale = pointerState.elStart.scale * scaleRatio;
-          el.rotation = pointerState.elStart.rotation + (newAngle - pointerState.initialAngle);
-          drawPreview();
-        }
-      }
-    });
-
-    previewWrap.addEventListener('pointerup', (ev)=>{
-      previewWrap.releasePointerCapture(ev.pointerId);
-      pointers.delete(ev.pointerId);
-      pointerState.dragging = false;
-      pointerState.elStart = null;
-    });
-    previewWrap.addEventListener('pointercancel', (ev)=> {
-      pointers.delete(ev.pointerId);
-      pointerState.dragging = false;
-    });
-
-    function distance(a,b){ return Math.hypot(a.x - b.x, a.y - b.y); }
-    function angle(a,b){ return Math.atan2(b.y - a.y, b.x - a.x); }
-
-    // update UI item list
-    function updateItemList(){
-      if(elements.length === 0){ itemListEl.textContent = '当前无元素'; return; }
-      itemListEl.innerHTML = '';
-      elements.forEach((el, idx)=>{
-        const div = document.createElement('div');
-        div.textContent = `${idx+1}. ${el.type === 'sticker' ? (el.name||'贴纸') : el.text}`;
-        if(el.id === selectedId) div.style.fontWeight = '700';
-        div.addEventListener('click', ()=> { selectedId = el.id; drawPreview(); updateItemList(); });
-        itemListEl.appendChild(div);
+        shutter.disabled = false;
       });
-    }
 
-    // button actions
-    addTextBtn.addEventListener('click', addText);
-    shutter.addEventListener('click', async ()=>{
-      // 拍照（只是提示，预览已是实时）
-      // 若需要把当前预览导出，可调用 takePhotoAndCompose（下方）
-      // 这里保持与保存按钮一致：导出并下载
-      const dataUrl = await takePhotoAndCompose();
-      triggerDownload(dataUrl, `jingxi-fudi-${Date.now()}.jpg`);
-    });
-
-    saveBtn.addEventListener('click', async ()=>{
-      const dataUrl = await takePhotoAndCompose();
-      triggerDownload(dataUrl, `jingxi-fudi-${Date.now()}.jpg`);
-    });
-
-    undoBtn.addEventListener('click', ()=> undo());
-    clearBtn.addEventListener('click', ()=> { pushHistory(); elements = []; selectedId = null; drawPreview(); updateItemList(); });
-
-    selectTopBtn.addEventListener('click', ()=>{
-      if(!selectedId) return;
-      const idx = elements.findIndex(e=>e.id===selectedId);
-      if(idx>=0){
-        const [el] = elements.splice(idx,1);
-        elements.push(el);
-        drawPreview();
-        updateItemList();
-      }
-    });
-
-    deleteItemBtn.addEventListener('click', ()=>{
-      if(!selectedId) return;
-      const idx = elements.findIndex(e=>e.id===selectedId);
-      if(idx>=0){
-        pushHistory();
-        elements.splice(idx,1);
-        selectedId = null;
-        drawPreview();
-        updateItemList();
-      }
-    });
-
-    // upload sticker
-    uploadSticker.addEventListener('change', (e)=>{
-      const f = e.target.files && e.target.files[0];
-      if(!f) return;
-      const url = URL.createObjectURL(f);
-      const img = new Image();
-      img.onload = ()=>{
-        // add to preset visually and add to page
-        const dataUrl = url;
-        const s = { name: f.name, data: dataUrl };
-        presetStickers.push(s);
-        renderStickerLibrary();
-        addStickerFromDataUrl(dataUrl);
-      };
-      img.src = url;
-      uploadSticker.value = '';
-    });
-
-    // download helper
-    function triggerDownload(dataUrl, filename){
-      const a = document.createElement('a');
-      a.href = dataUrl;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-    }
-
-    // composition: capture high-res frame from video if possible, then draw decorations + elements with filters to final canvas (offscreen)
-    async function takePhotoAndCompose(){
-      // create offscreen canvas based on video settings for higher quality
-      const videoTrack = stream && stream.getVideoTracks()[0];
-      let captureWidth = previewCanvas.width; // pixel
-      let captureHeight = previewCanvas.height;
-      // if track provides settings, try to use natural resolution
-      if(videoTrack){
-        const settings = videoTrack.getSettings();
-        if(settings.width && settings.height){
-          captureWidth = settings.width;
-          captureHeight = settings.height;
+      saveBtn.addEventListener('click', async ()=>{
+        const dataUrl = await takePhoto();
+        if(dataUrl){
+          const a = document.createElement('a');
+          a.href = dataUrl; a.download = 'jingxi-fudi-' + Date.now() + '.jpg';
+          document.body.appendChild(a); a.click(); a.remove();
         }
-      }
-      const c = document.createElement('canvas');
-      c.width = captureWidth;
-      c.height = captureHeight;
-      const cctx = c.getContext('2d');
+      });
 
-      // draw video frame scaled to canvas
-      try{
-        cctx.save();
-        // apply filters before draw
-        cctx.filter = `brightness(${filters.brightness.value}) contrast(${filters.contrast.value}) saturate(${filters.saturate.value}) blur(${filters.blur.value}px)`;
-        cctx.drawImage(video, 0, 0, c.width, c.height);
-        cctx.restore();
-      }catch(e){
-        // fallback: draw black
-        cctx.fillStyle = '#000';
-        cctx.fillRect(0,0,c.width,c.height);
-      }
+      flipBtn.addEventListener('click', async ()=>{
+        usingFront = !usingFront;
+        stopCamera();
+        await startCamera();
+      });
 
-      // draw default decor scaled
-      // compute scaling from previewCanvas size to final c size
-      const scaleX = c.width / previewCanvas.width;
-      const scaleY = c.height / previewCanvas.height;
-
-      // draw same default decor but scaled
-      drawDefaultDecorOnCtx(cctx, c.width, c.height);
-
-      // draw elements
-      for(const el of elements){
-        if(el.type === 'sticker'){
-          cctx.save();
-          cctx.translate((el.x + el.w/2) * scaleX, (el.y + el.h/2) * scaleY);
-          cctx.rotate(el.rotation);
-          cctx.scale(el.scale * scaleX, el.scale * scaleY);
-          cctx.drawImage(el.img, -el.w/2, -el.h/2, el.w, el.h);
-          cctx.restore();
-        } else if(el.type === 'text'){
-          cctx.save();
-          cctx.translate(el.x * scaleX, el.y * scaleY);
-          cctx.rotate(el.rotation);
-          cctx.scale(el.scale * scaleX, el.scale * scaleY);
-          const fontWeight = el.bold ? '700' : '500';
-          const size = el.fontSize;
-          cctx.font = `${fontWeight} ${size}px "Noto Sans SC","Microsoft YaHei"`;
-          cctx.textAlign = 'center';
-          cctx.textBaseline = 'middle';
-          if(el.shadow){
-            cctx.shadowColor = 'rgba(0,0,0,0.35)';
-            cctx.shadowBlur = 12;
-            cctx.shadowOffsetY = 6;
-          } else {
-            cctx.shadowColor = 'transparent';
-            cctx.shadowBlur = 0;
-          }
-          cctx.fillStyle = el.color;
-          cctx.fillText(el.text, 0, 0);
-          cctx.restore();
-        }
-      }
-
-      // return dataURL
-      return c.toDataURL('image/jpeg', 0.95);
-    }
-
-    function drawDefaultDecorOnCtx(cctx, cw, ch){
-      cctx.save();
-      cctx.fillStyle = 'rgba(201,26,26,0.85)';
-      cctx.fillRect(cw*0.05, ch*0.03, cw*0.9, ch*0.085);
-      cctx.fillStyle = '#fff';
-      cctx.font = `600 ${Math.floor(cw*0.04)}px "Noto Sans SC"`;
-      cctx.textAlign = 'center';
-      cctx.textBaseline = 'middle';
-      cctx.fillText('京西福地 · 五福临门', cw/2, ch*0.075);
-      cctx.restore();
-
-      cctx.save();
-      cctx.font = `900 ${Math.floor(cw*0.09)}px "Noto Sans SC"`;
-      cctx.textAlign = 'center';
-      cctx.textBaseline = 'middle';
-      cctx.fillStyle = '#c91018';
-      cctx.shadowColor = 'rgba(0,0,0,0.35)';
-      cctx.shadowBlur = 20;
-      cctx.fillText('马年大吉', cw/2, ch*0.6);
-      cctx.restore();
-    }
-
-    // trigger initializations
-    renderStickerLibrary();
-    startCamera();
-
-    // update loop to keep preview in sync
-    setInterval(drawPreview, 80);
-
-    // update selected element properties when control changes
-    fontSize.addEventListener('input', ()=> {
-      if(!selectedId) return;
-      const el = elements.find(e=>e.id===selectedId);
-      if(el && el.type==='text'){ el.fontSize = parseInt(fontSize.value,10); drawPreview(); }
-    });
-    fontColor.addEventListener('input', ()=> {
-      if(!selectedId) return;
-      const el = elements.find(e=>e.id===selectedId);
-      if(el && el.type==='text'){ el.color = fontColor.value; drawPreview(); }
-    });
-    boldToggle.addEventListener('click', ()=> {
-      boldToggle.classList.toggle('on');
-      if(!selectedId) return;
-      const el = elements.find(e=>e.id===selectedId);
-      if(el && el.type==='text'){ el.bold = boldToggle.classList.contains('on'); drawPreview(); }
-    });
-    textShadow.addEventListener('change', ()=> {
-      if(!selectedId) return;
-      const el = elements.find(e=>e.id===selectedId);
-      if(el && el.type==='text'){ el.shadow = textShadow.checked; drawPreview(); }
-    });
-
-    // simple keyboard support for desktop: delete selected with Delete key
-    window.addEventListener('keydown', (e)=>{
-      if(e.key === 'Delete' && selectedId){
-        const idx = elements.findIndex(x=>x.id===selectedId);
-        if(idx>=0){ elements.splice(idx,1); selectedId = null; drawPreview(); updateItemList(); }
-      }
-    });
-
-    // utility: add sticker by clicking placeholder
-    function addStickerFromDataUrl(dataUrl){
-      const img = new Image();
-      img.onload = ()=>{
-        pushHistory();
-        const id = 'el_' + Date.now();
-        const wrapRect = previewCanvas.getBoundingClientRect();
-        const baseW = wrapRect.width * 0.36;
-        const aspect = img.width / img.height;
-        const baseH = baseW / aspect;
-        const el = {
-          id, type:'sticker', img, x: wrapRect.width/2 - baseW/2, y: wrapRect.height/2 - baseH/2,
-          scale:1, rotation:0, w: baseW, h: baseH, name: '贴纸'
+      // file input fallback
+      fileInput.addEventListener('change', (e)=>{
+        const f = e.target.files && e.target.files[0];
+        if(!f) return;
+        const url = URL.createObjectURL(f);
+        const img = new Image();
+        img.onload = ()=>{
+          canvas.width = img.naturalWidth; canvas.height = img.naturalHeight;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img,0,0);
+          // draw overlays
+          ctx.save();
+          ctx.font = Math.floor(canvas.width/14) + 'px "Noto Sans SC"';
+          ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+          ctx.lineWidth = Math.max(6, Math.round(canvas.width*0.006));
+          ctx.strokeStyle = 'rgba(80,40,10,0.9)';
+          ctx.strokeText('京西福地  五福临门', canvas.width/2, canvas.height - 40);
+          ctx.fillStyle = '#ffd66b';
+          ctx.fillText('京西福地  五福临门', canvas.width/2, canvas.height - 40);
+          ctx.restore();
+          // open preview
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+          const w = window.open(); if(w){ w.document.write('<img src="'+dataUrl+'" style="max-width:100%">'); }
+          URL.revokeObjectURL(url);
         };
-        elements.push(el);
-        selectedId = id;
-        drawPreview();
-        updateItemList();
-      };
-      img.src = dataUrl;
-    }
+        img.src = url;
+      });
 
-    // ensure page resizes canvas on orientation change
-    window.addEventListener('resize', ()=> resizeCanvas());
-    window.addEventListener('orientationchange', ()=> setTimeout(resizeCanvas,200));
+      // start on load
+      startCamera();
+      // cleanup
+      window.addEventListener('pagehide', ()=> stopCamera());
+    })();
   </script>
 </body>
 </html>
